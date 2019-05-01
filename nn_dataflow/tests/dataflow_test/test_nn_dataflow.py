@@ -430,13 +430,20 @@ class TestNNDataflow(unittest.TestCase):
         '''
         network = self.alex_net
 
-        batch_size = 16
+#         batch_size = 16
 
-        nnd = NNDataflow(network, batch_size, self.resource, self.cost,
-                         self.map_strategy)
-        tops, _ = nnd.schedule_search(self.options)
-        self.assertTrue(tops)
-        dfsch = tops[0]
+#         nnd = NNDataflow(network, batch_size, self.resource, self.cost,
+#                          self.map_strategy)
+#         tops, _ = nnd.schedule_search(self.options)
+#         self.assertTrue(tops)
+#         dfsch = tops[0]
+        
+        # Use tool
+        from nn_dataflow.tools import nn_dataflow_search as nnds
+        cmd = '--batch 16 --nodes 1 1 --array 16 16 --regf 512 --gbuf 131072 --mem-type 3D --disable-bypass i o f --hop-cost 0 alex_net'
+        args = nnds.argparser().parse_args(cmd.split())
+        res = nnds.do_scheduling(args)
+        dfsch = res['schedules']
 
         ## Check results.
 
@@ -497,8 +504,8 @@ class TestNNDataflow(unittest.TestCase):
         batch_size = 4
 
         resource = Resource(proc_region=NodeRegion(origin=PhyDim2(0, 0),
-                                                   dim=PhyDim2(1, 1),
-                                                   type=NodeRegion.PROC),
+                                                  dim=PhyDim2(1, 1),
+                                                  type=NodeRegion.PROC),
                             dram_region=NodeRegion(
                                 origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
                                 type=NodeRegion.DRAM),
@@ -514,18 +521,25 @@ class TestNNDataflow(unittest.TestCase):
                             array_bus_width=float('inf'),
                             dram_bandwidth=float('inf'),
                             no_time_mux=False,
-                           )
+                          )
 
         cost = Cost(mac_op=2e-12,
                     mem_hier=(460e-12, 15e-12, 4e-12, 1e-12),  # pJ/16-b
                     noc_hop=0,
                     idl_unit=30e-3 / 200e6)  # 30 mW GBUF + REGF
 
-        nnd = NNDataflow(network, batch_size, resource, cost,
-                         self.map_strategy)
-        tops, _ = nnd.schedule_search(self.options)
-        self.assertTrue(tops)
-        dfsch = tops[0]
+        # nnd = NNDataflow(network, batch_size, resource, cost,
+        #                  self.map_strategy)
+        # tops, _ = nnd.schedule_search(self.options)
+        # self.assertTrue(tops)
+        # dfsch = tops[0]
+        
+        # Use tool
+        from nn_dataflow.tools import nn_dataflow_search as nnds
+        cmd = '--batch 4 --nodes 1 1 --array 12 14 --regf 522 --gbuf 110592 --mem-type 3D --disable-bypass i o f --hop-cost 0 --op-cost 2e-12 --hier-cost 460e-12 15e-12 4e-12 1e-12 --unit-idle-cost 1.5e-10 alex_net'
+        args = nnds.argparser().parse_args(cmd.split())
+        res = nnds.do_scheduling(args)
+        dfsch = res['schedules']
 
         ## Check results.
 
